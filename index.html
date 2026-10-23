@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aix-en-Provence et ses transports en commun</title>
+<meta name="description" content="Carte interactive : temps de marche entre chaque bâtiment d'Aix-en-Provence et l'arrêt de bus le plus proche.">
+<meta property="og:title" content="Aix-en-Provence est-elle bien desservie par les transports en commun ?">
+<meta property="og:description" content="Temps de marche de 63 122 bâtiments à l'arrêt de bus le plus proche.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23424245'/%3E%3Ccircle cx='16' cy='16' r='9' fill='%231a9641'/%3E%3Ccircle cx='16' cy='16' r='4' fill='%23000'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600&family=Caprasimo&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="lib/maplibre-gl.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="map" aria-label="Carte de la desserte en bus d'Aix-en-Provence"></div>
+
+<div id="loader"><div class="spinner"></div><p>Chargement de 63 122 bâtiments…</p></div>
+
+<!-- Titre + légende (même sémiologie que la carte statique) -->
+<aside id="panel" class="panel">
+  <h1>Aix-en-Provence est-elle bien desservie par les transports en commun&nbsp;?</h1>
+
+  <button id="panel-toggle" class="chip only-mobile" aria-expanded="true">Légende</button>
+
+  <div id="panel-body">
+    <ul class="legend">
+      <li class="lg-line">
+        <span class="sw sw-line"></span><span class="lg-label">Limites administratives d'Aix-en-Provence</span>
+      </li>
+      <li class="lg-line">
+        <label class="lg-check"><input type="checkbox" id="chk-stops" checked>
+          <span class="sw sw-dot"></span><span class="lg-label">Arrêts de bus</span></label>
+      </li>
+    </ul>
+
+    <h2>Temps de marche arrêt/bâtiment</h2>
+    <ul class="legend" id="legend-classes"></ul>
+    <p class="hint">Cliquez sur une classe pour l'afficher ou la masquer.</p>
+
+    <div class="keyfig" id="keyfig" hidden>
+      <div class="bar" id="statbar" role="img" aria-label="Répartition des bâtiments par temps de marche"></div>
+      <p id="keytext"></p>
+    </div>
+  </div>
+</aside>
+
+<!-- Barre d'outils -->
+<nav id="toolbar" aria-label="Outils">
+  <button id="btn-method" class="chip primary" aria-controls="drawer">Méthodologie</button>
+  <div class="seg" role="group" aria-label="Fond de carte">
+    <button class="chip on" data-base="dark">Sombre</button>
+    <button class="chip" data-base="light">Clair</button>
+    <button class="chip" data-base="sat">Satellite</button>
+  </div>
+  <label class="chip tog"><input type="checkbox" id="chk-labels"> Toponymes</label>
+</nav>
+
+<div id="northarrow" aria-hidden="true">
+  <svg viewBox="0 0 40 52"><path d="M20 2 L38 50 L20 38 L2 50 Z" fill="#fff"/></svg>
+</div>
+
+<footer id="credits">
+  Données&nbsp;: Réseau urbain de la métropole Aix-Marseille (arrêts) · BD TOPO IGN (bâtiments, limites communales) · calculs&nbsp;: Lambert-93, 84&nbsp;m/min ·
+  Fonds&nbsp;: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>,
+  © <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>,
+  © <a href="https://www.esri.com" target="_blank" rel="noopener">Esri</a>
+</footer>
+
+<!-- Méthodologie -->
+<section id="drawer" class="drawer" aria-hidden="true" aria-labelledby="m-title" tabindex="-1">
+  <div class="drawer-head">
+    <h2 id="m-title">Méthodologie</h2>
+    <button id="drawer-close" class="chip" aria-label="Fermer la méthodologie">Fermer ✕</button>
+  </div>
+  <div class="drawer-body">
+    <p class="lead">Pour chaque bâtiment d'Aix-en-Provence, on mesure la distance à l'arrêt de bus le plus proche,
+      puis on la convertit en temps de marche. Quatre étapes, entièrement reproductibles avec
+      <code>scripts/build_data.py</code>.</p>
+
+    <h3><span class="n">1</span>Données utilisées</h3>
+    <ul>
+      <li><strong>Arrêts de bus</strong>&nbsp;: <span id="m-nstops">883</span> arrêts issus du GTFS <em>mamp-aix</em> (stop_id, nom, commune, coordonnées). Les arrêts des communes voisines proches de la limite sont conservés&nbsp;: un habitant d'Aix peut les utiliser. <span class="src">Source&nbsp;: Réseau urbain de la métropole Aix-Marseille.</span></li>
+      <li><strong>Bâtiments</strong>&nbsp;: <span id="m-nbat">63 122</span> emprises de bâtiments (polygones) de la commune. <span class="src">Source&nbsp;: BD TOPO IGN.</span></li>
+      <li><strong>Limites administratives</strong>&nbsp;: contour d'Aix-en-Provence. <span class="src">Source&nbsp;: BD TOPO IGN.</span></li>
+    </ul>
+
+    <h3><span class="n">2</span>Reprojection en Lambert-93</h3>
+    <p>Les données brutes sont en coordonnées géographiques (<strong>EPSG:4326</strong>), exprimées en degrés&nbsp;: inadaptées au calcul de distances précises. Toutes les couches sont reprojetées en <strong>RGF93 / Lambert-93 (EPSG:2154)</strong>, projection légale française dont l'unité est le <strong>mètre</strong>.</p>
+
+    <h3><span class="n">3</span>Arrêt le plus proche et distance</h3>
+    <p>Pour chaque bâtiment, on cherche l'arrêt le plus proche et on calcule la <strong>distance euclidienne</strong> (à vol d'oiseau, en mètres) entre le bord du bâtiment et cet arrêt.</p>
+    <details>
+      <summary>Qu'est-ce qu'un index spatial, et pourquoi l'utiliser&nbsp;?</summary>
+      <p>Un index spatial range les objets géographiques selon leur position, comme le classement d'une bibliothèque permet de trouver un livre sans ouvrir tous les rayons. Ici, un index (<code>sindex</code> de GeoPandas, structure de type R-tree) est construit sur les arrêts&nbsp;: pour chaque bâtiment, il désigne immédiatement quelques arrêts candidats, et la distance exacte n'est calculée que pour eux, au lieu de comparer chaque bâtiment aux 883&nbsp;arrêts. Le gain est considérable avec plus de 63&nbsp;000&nbsp;bâtiments.</p>
+    </details>
+
+    <h3><span class="n">4</span>Conversion en temps de marche et classes</h3>
+    <div class="formula">temps (min) = distance (m) ÷ <b>84</b> m/min</div>
+    <p>Soit une vitesse de marche moyenne de 84&nbsp;m/min, environ 5&nbsp;km/h. Les temps sont ensuite répartis en cinq classes (bornes supérieures incluses, comme <code>pd.cut</code>)&nbsp;:</p>
+    <table class="mt" id="m-table">
+      <thead><tr><th>Classe</th><th>Bâtiments</th><th>Part</th><th>Part de l'emprise bâtie</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <p class="small">Temps médian&nbsp;: <b id="m-med"></b> min · temps moyen&nbsp;: <b id="m-mean"></b> min.</p>
+
+    <h3><span class="n">!</span>Limites de l'analyse</h3>
+    <ul>
+      <li><strong>Distance à vol d'oiseau</strong>&nbsp;: elle sous-estime le trajet réel (réseau de voiries, coupures, pentes, traversées). Un calcul sur le réseau piéton donnerait des temps plus longs.</li>
+      <li><strong>Desserte théorique</strong>&nbsp;: tous les arrêts comptent pareil, sans tenir compte de la fréquence, des horaires, des lignes ni de la destination.</li>
+      <li><strong>Bâtiment ≠ habitant</strong>&nbsp;: un bâtiment peut être un garage, un hangar ou une résidence de 200 logements. Les parts sont calculées en nombre de bâtiments (et en emprise au sol), pas en population.</li>
+      <li><strong>Vitesse unique</strong>&nbsp;: 84&nbsp;m/min pour tous, sans distinction d'âge ou de mobilité réduite.</li>
+    </ul>
+  </div>
+</section>
+
+<script src="lib/maplibre-gl.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
