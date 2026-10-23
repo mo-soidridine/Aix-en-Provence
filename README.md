@@ -26,4 +26,4 @@ Distance à vol d'oiseau (et non sur le réseau piéton) ; desserte théorique s
 
 ## Crédits
 
-Arrêts : GTFS *mamp-aix*, Réseau urbain de la métropole Aix-Marseille · Bâtiments et limites communales : BD TOPO IGN · Carte : MapLibre GL JS.
+Arrêts : GTFS *mamp-aix*, Réseau urbain de la métropole Aix-Marseille ; Bâtiments et limites communales : BD TOPO IGN
