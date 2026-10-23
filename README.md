@@ -16,9 +16,9 @@ Carte interactive (webmapping) du **temps de marche entre chaque bâtiment d'Aix
 ## Méthodologie (résumé)
 
 1. **Reprojection** de toutes les couches en RGF93 / Lambert-93 (EPSG:2154, mètres).
-2. **Arrêt le plus proche** de chaque bâtiment grâce à un index spatial (STRtree / `sindex`) ; distance euclidienne entre le bord du bâtiment et l'arrêt.
+2. **Arrêt le plus proche** de chaque bâtiment grâce à un index spatial ; distance euclidienne entre le bord du bâtiment et l'arrêt.
 3. **Temps de marche** = distance ÷ 84 m/min (≈ 5 km/h).
-4. **Classes** : 0-5, 5-10, 10-15, 15-20, > 20 min (bornes supérieures incluses, comme `pd.cut`).
+4. **Classes** : 0-5, 5-10, 10-15, 15-20, > 20 min.
 
 ### Limites
 
@@ -26,4 +26,4 @@ Distance à vol d'oiseau (et non sur le réseau piéton) ; desserte théorique s
 
 ## Crédits
 
-Arrêts : GTFS *mamp-aix*, Réseau urbain de la métropole Aix-Marseille · Bâtiments et limites communales : BD TOPO IGN · Fonds : Esri, Maxar, Earthstar Geographics · Carte : MapLibre GL JS.
+Arrêts : GTFS *mamp-aix*, Réseau urbain de la métropole Aix-Marseille · Bâtiments et limites communales : BD TOPO IGN · Carte : MapLibre GL JS.
