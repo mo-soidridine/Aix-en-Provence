@@ -2,12 +2,10 @@
 
 Carte interactive (webmapping) du **temps de marche entre chaque bâtiment d'Aix-en-Provence et l'arrêt de bus le plus proche** : 63 122 bâtiments, 883 arrêts.
 
-![Aperçu](docs/apercu.png)
-
 ## Résultats
 
 | Temps de marche | Bâtiments | Part |
-|---|---:|---:|---:|
+|---|---:|---:|
 | 0-5 min | 50 377 | 79,8 % |
 | 5-10 min | 6 787 | 10,8 % |
 | 10-15 min | 3 099 | 4,9 % |
